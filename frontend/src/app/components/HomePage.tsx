@@ -1,30 +1,53 @@
-import { useState } from 'react';
-import { Github, Sparkles, Shield, Target, FileSearch, Zap } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Switch } from './ui/switch';
-import { Card, CardContent } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { useState } from "react";
+import {
+  Github,
+  Sparkles,
+  Shield,
+  Target,
+  FileSearch,
+  Zap,
+} from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
+import { Card, CardContent } from "./ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface HomePageProps {
-  onAnalyze: (prUrl: string, options: any) => void;
+  onAnalyze: (input: {
+    prUrl?: string;
+    diffText?: string;
+    useRepoRules: boolean;
+  }) => void;
   isAnalyzing: boolean;
+  statusMessage?: string | null;
 }
 
-export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
-  const [prUrl, setPrUrl] = useState('');
-  const [diffText, setDiffText] = useState('');
+export function HomePage({
+  onAnalyze,
+  isAnalyzing,
+  statusMessage,
+}: HomePageProps) {
+  const [prUrl, setPrUrl] = useState("");
+  const [diffText, setDiffText] = useState("");
   const [useRepoRules, setUseRepoRules] = useState(false);
-  const [inputMethod, setInputMethod] = useState<'url' | 'diff'>('url');
+  const [inputMethod, setInputMethod] = useState<"url" | "diff">("url");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const input = inputMethod === 'url' ? prUrl : diffText;
-    if (input.trim()) {
-      onAnalyze(input, { useRepoRules });
-    }
+    const trimmedUrl = prUrl.trim();
+    const trimmedDiff = diffText.trim();
+
+    if (inputMethod === "url" && !trimmedUrl) return;
+    if (inputMethod === "diff" && !trimmedDiff) return;
+
+    onAnalyze({
+      prUrl: inputMethod === "url" ? trimmedUrl : undefined,
+      diffText: inputMethod === "diff" ? trimmedDiff : undefined,
+      useRepoRules,
+    });
   };
 
   return (
@@ -38,7 +61,9 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
             </div>
             <div>
               <h1 className="font-semibold text-slate-900">AI PR Reviewer</h1>
-              <p className="text-sm text-slate-500">Intelligent code review analysis</p>
+              <p className="text-sm text-slate-500">
+                Intelligent code review analysis
+              </p>
             </div>
           </div>
         </div>
@@ -55,8 +80,8 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
             Get Comprehensive Code Reviews in Seconds
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Paste a GitHub PR URL or diff to receive prioritized findings, risk analysis, 
-            security insights, and automated test plans.
+            Paste a GitHub PR URL or diff to receive prioritized findings, risk
+            analysis, security insights, and automated test plans.
           </p>
         </div>
       </div>
@@ -71,7 +96,8 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
               </div>
               <h3 className="mb-2 text-slate-900">Smart Analysis</h3>
               <p className="text-sm text-slate-600">
-                AI-powered review identifies critical issues across your entire PR
+                AI-powered review identifies critical issues across your entire
+                PR
               </p>
             </CardContent>
           </Card>
@@ -95,7 +121,8 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
               </div>
               <h3 className="mb-2 text-slate-900">Test Plans</h3>
               <p className="text-sm text-slate-600">
-                Get targeted test suggestions for unit, integration, and edge cases
+                Get targeted test suggestions for unit, integration, and edge
+                cases
               </p>
             </CardContent>
           </Card>
@@ -117,7 +144,10 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
         <Card className="max-w-3xl mx-auto shadow-lg">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit}>
-              <Tabs value={inputMethod} onValueChange={(v) => setInputMethod(v as 'url' | 'diff')}>
+              <Tabs
+                value={inputMethod}
+                onValueChange={(v) => setInputMethod(v as "url" | "diff")}
+              >
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="url">
                     <Github className="w-4 h-4 mr-2" />
@@ -184,8 +214,12 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
                   <div className="flex items-center gap-3">
                     <Github className="w-5 h-5 text-slate-400" />
                     <div>
-                      <p className="text-sm text-slate-700">Post review to GitHub</p>
-                      <p className="text-xs text-slate-500">Sign in to enable</p>
+                      <p className="text-sm text-slate-700">
+                        Post review to GitHub
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Sign in to enable
+                      </p>
                     </div>
                   </div>
                   <Switch disabled />
@@ -197,7 +231,10 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
                 <Button
                   type="submit"
                   className="w-full h-12"
-                  disabled={isAnalyzing || (inputMethod === 'url' ? !prUrl.trim() : !diffText.trim())}
+                  disabled={
+                    isAnalyzing ||
+                    (inputMethod === "url" ? !prUrl.trim() : !diffText.trim())
+                  }
                 >
                   {isAnalyzing ? (
                     <>
@@ -211,6 +248,11 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
                     </>
                   )}
                 </Button>
+                {statusMessage && (
+                  <p className="mt-2 text-sm text-slate-500 text-center">
+                    {statusMessage}
+                  </p>
+                )}
               </div>
             </form>
           </CardContent>
@@ -218,14 +260,16 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
 
         {/* Example PRs */}
         <div className="max-w-3xl mx-auto mt-8">
-          <p className="text-sm text-slate-500 text-center mb-4">Try an example:</p>
+          <p className="text-sm text-slate-500 text-center mb-4">
+            Try an example:
+          </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setPrUrl('https://github.com/facebook/react/pull/28177');
-                setInputMethod('url');
+                setPrUrl("https://github.com/facebook/react/pull/28177");
+                setInputMethod("url");
               }}
             >
               React PR Example
@@ -234,8 +278,8 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
               variant="outline"
               size="sm"
               onClick={() => {
-                setPrUrl('https://github.com/microsoft/vscode/pull/198234');
-                setInputMethod('url');
+                setPrUrl("https://github.com/microsoft/vscode/pull/198234");
+                setInputMethod("url");
               }}
             >
               VSCode PR Example
@@ -244,8 +288,8 @@ export function HomePage({ onAnalyze, isAnalyzing }: HomePageProps) {
               variant="outline"
               size="sm"
               onClick={() => {
-                setPrUrl('https://github.com/vercel/next.js/pull/59567');
-                setInputMethod('url');
+                setPrUrl("https://github.com/vercel/next.js/pull/59567");
+                setInputMethod("url");
               }}
             >
               Next.js PR Example
