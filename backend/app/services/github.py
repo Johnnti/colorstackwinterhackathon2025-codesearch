@@ -58,7 +58,7 @@ class GitHubService:
     async def get_pr(self, owner: str, repo: str, pr_number: int) -> dict:
         """Fetch PR metadata."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/pulls/{pr_number}"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=self.headers, timeout=30)
             response.raise_for_status()
             return response.json()
@@ -67,7 +67,7 @@ class GitHubService:
         """Fetch the PR diff."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/pulls/{pr_number}"
         headers = {**self.headers, "Accept": "application/vnd.github.v3.diff"}
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=headers, timeout=60)
             response.raise_for_status()
             return response.text
@@ -75,7 +75,7 @@ class GitHubService:
     async def get_pr_files(self, owner: str, repo: str, pr_number: int) -> list[dict]:
         """Fetch list of files changed in the PR."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/pulls/{pr_number}/files"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=self.headers, timeout=30)
             response.raise_for_status()
             return response.json()
@@ -83,7 +83,7 @@ class GitHubService:
     async def get_pr_commits(self, owner: str, repo: str, pr_number: int) -> list[dict]:
         """Fetch commits in the PR."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/pulls/{pr_number}/commits"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=self.headers, timeout=30)
             response.raise_for_status()
             return response.json()
@@ -92,7 +92,7 @@ class GitHubService:
         """Fetch content of a specific file at a given ref."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/contents/{path}"
         params = {"ref": ref}
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(url, headers=self.headers, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
@@ -135,7 +135,7 @@ class GitHubService:
     async def post_comment(self, owner: str, repo: str, pr_number: int, body: str) -> dict:
         """Post a comment to a PR."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/issues/{pr_number}/comments"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.post(
                 url,
                 headers=self.headers,
