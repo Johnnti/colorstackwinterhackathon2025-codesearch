@@ -38,17 +38,41 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
     
+    # CORS middleware MUST be added first (will process last in request chain)
+    allow_credentials = True
+    if len(settings.allowed_origins) == 1 and settings.allowed_origins[0] == "*":
+        allow_credentials = False
+
+    logger.info(f"🔓 CORS Origins: {settings.allowed_origins}")
+    logger.info(f"🔐 CORS Credentials: {allow_credentials}")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins,
+        allow_origin_regex=settings.allowed_origin_regex,
+        allow_credentials=allow_credentials,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["*"],
+    )
+    
     # Request logging middleware
     @app.middleware("http")
     async def log_request(request: Request, call_next):
         # Log incoming request
         logger.info(f"📨 {request.method} {request.url.path}")
-        try:
-            body = await request.body()
-            if body and request.method in ["POST", "PUT", "PATCH"]:
-                logger.debug(f"📤 Request body: {body[:500].decode() if isinstance(body, bytes) else body[:500]}")
-        except:
-            pass
+        
+        # Skip body logging for OPTIONS and GET requests
+        if request.method not in ["OPTIONS", "GET", "HEAD"]:
+            try:
+                body = await request.body()
+                if body:
+                    logger.debug(f"📤 Request body: {body[:500].decode() if isinstance(body, bytes) else body[:500]}")
+                # Recreate the request with the body so it can be read again by the handlers
+                async def receive():
+                    return {"type": "http.request", "body": body}
+                request._receive = receive
+            except Exception as e:
+                logger.debug(f"Could not log body: {e}")
         
         response = await call_next(request)
         logger.info(f"📫 {request.method} {request.url.path} -> {response.status_code}")
@@ -67,23 +91,6 @@ def create_app() -> FastAPI:
             status_code=422,
             content={"detail": exc.errors()}
         )
-    
-    # CORS middleware
-    # If using wildcard origins, credentials must be disabled per CORS spec
-    allow_credentials = True
-    if len(settings.allowed_origins) == 1 and settings.allowed_origins[0] == "*":
-        allow_credentials = False
-
-    logger.info(f"🔓 CORS Origins: {settings.allowed_origins}")
-    logger.info(f"🔐 CORS Credentials: {allow_credentials}")
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_origin_regex=settings.allowed_origin_regex,
-        allow_credentials=allow_credentials,
-        allow_methods=["*"],
-        allow_headers=["*"],
     )
     
     # Include routers
