@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     
     # CORS
     allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175"]
+    allowed_origin_regex: str | None = None
     
     class Config:
         env_file = ".env"
@@ -40,4 +41,8 @@ def get_settings() -> Settings:
     env_csv = os.getenv("ALLOWED_ORIGINS")
     if env_csv:
         settings.allowed_origins = [o.strip() for o in env_csv.split(",") if o.strip()]
+    # Optional regex support for wildcard domains
+    env_regex = os.getenv("ALLOWED_ORIGIN_REGEX")
+    if env_regex:
+        settings.allowed_origin_regex = env_regex.strip()
     return settings
