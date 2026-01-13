@@ -29,7 +29,7 @@ class AnalyzeRequest(BaseModel):
     """Request body for /api/analyze endpoint."""
     pr_url: Optional[str] = None
     diff_text: Optional[str] = None
-    options: AnalyzeOptions = Field(default_factory=AnalyzeOptions)
+    options: Optional[AnalyzeOptions] = Field(default_factory=AnalyzeOptions)
     
     class Config:
         json_schema_extra = {
