@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
+import json
 
 
 class Settings(BaseSettings):
@@ -40,7 +41,18 @@ def get_settings() -> Settings:
     # Parse ALLOWED_ORIGINS from env (comma-separated)
     env_csv = os.getenv("ALLOWED_ORIGINS")
     if env_csv:
-        settings.allowed_origins = [o.strip() for o in env_csv.split(",") if o.strip()]
+        parsed = None
+        try:
+            parsed = json.loads(env_csv)
+        except json.JSONDecodeError:
+            parsed = None
+
+        if isinstance(parsed, list):
+            settings.allowed_origins = [str(o).strip() for o in parsed if str(o).strip()]
+        elif isinstance(parsed, str):
+            settings.allowed_origins = [parsed.strip()]
+        else:
+            settings.allowed_origins = [o.strip() for o in env_csv.split(",") if o.strip()]
     else:
         # Ensure we always have at least the default
         if not settings.allowed_origins:
