@@ -38,7 +38,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
     
-    # CORS middleware MUST be added first (will process last in request chain)
+    # CORS configuration
     allow_credentials = True
     if len(settings.allowed_origins) == 1 and settings.allowed_origins[0] == "*":
         allow_credentials = False
@@ -55,38 +55,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # Request logging middleware
-    @app.middleware("http")
-    async def log_request(request: Request, call_next):
-        # Log incoming request
-        logger.info(f"📨 {request.method} {request.url.path}")
-        
-        # Skip body logging for OPTIONS and GET requests
-        if request.method not in ["OPTIONS", "GET", "HEAD"]:
-            try:
-                body = await request.body()
-                if body:
-                    logger.debug(f"📤 Request body: {body[:500].decode() if isinstance(body, bytes) else body[:500]}")
-                # Recreate the request with the body so it can be read again by the handlers
-                async def receive():
-                    return {"type": "http.request", "body": body}
-                request._receive = receive
-            except Exception as e:
-                logger.debug(f"Could not log body: {e}")
-        
-        response = await call_next(request)
-        logger.info(f"📫 {request.method} {request.url.path} -> {response.status_code}")
-        return response
-    
     # Exception handler for validation errors
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         logger.error(f"❌ Validation error: {exc.errors()}")
-        try:
-            body = await request.body()
-            logger.error(f"📦 Request body: {body.decode() if body else 'empty'}")
-        except:
-            logger.error("📦 Request body: unable to decode")
         return JSONResponse(
             status_code=422,
             content={"detail": exc.errors()}
