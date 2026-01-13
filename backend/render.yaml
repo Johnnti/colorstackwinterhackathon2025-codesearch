@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ai-pr-reviewer-backend
+    env: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ALLOWED_ORIGINS
+        value: https://colorstackwinterhackathon2025-codes.vercel.app,http://localhost:3000
