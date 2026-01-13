@@ -91,7 +91,7 @@ def create_app() -> FastAPI:
             status_code=422,
             content={"detail": exc.errors()}
         )
-    )
+    
     
     # Include routers
     app.include_router(health_router)
