@@ -279,7 +279,8 @@ The future of code review isn't AI vs humans—it's AI + humans working together
 ---
 
 **Built with ❤️ for ColorStack Winter Hackathon 2025**
-### Database migrations (if using Alembic)
+git checkout main
+git merge frontend -m "Merge frontend branch"### Database migrations (if using Alembic)
 
 ```bash
 alembic upgrade head
