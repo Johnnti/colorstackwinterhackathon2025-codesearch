@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import os
 
 
 class Settings(BaseSettings):
@@ -34,4 +35,9 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    # Parse ALLOWED_ORIGINS from env (comma-separated)
+    env_csv = os.getenv("ALLOWED_ORIGINS")
+    if env_csv:
+        settings.allowed_origins = [o.strip() for o in env_csv.split(",") if o.strip()]
+    return settings
