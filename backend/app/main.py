@@ -1,10 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi import Request
 from contextlib import asynccontextmanager
+import logging
 
 from .config import get_settings
 from .models import Base, engine
 from .routers import analyze_router, github_router, health_router
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -12,6 +20,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup: Create database tables
     Base.metadata.create_all(bind=engine)
+    logger.info("✅ Database tables created")
     yield
     # Shutdown: cleanup if needed
 
@@ -29,11 +38,44 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
     )
     
+    # Request logging middleware
+    @app.middleware("http")
+    async def log_request(request: Request, call_next):
+        # Log incoming request
+        logger.info(f"📨 {request.method} {request.url.path}")
+        try:
+            body = await request.body()
+            if body and request.method in ["POST", "PUT", "PATCH"]:
+                logger.debug(f"📤 Request body: {body[:500].decode() if isinstance(body, bytes) else body[:500]}")
+        except:
+            pass
+        
+        response = await call_next(request)
+        logger.info(f"📫 {request.method} {request.url.path} -> {response.status_code}")
+        return response
+    
+    # Exception handler for validation errors
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        logger.error(f"❌ Validation error: {exc.errors()}")
+        try:
+            body = await request.body()
+            logger.error(f"📦 Request body: {body.decode() if body else 'empty'}")
+        except:
+            logger.error("📦 Request body: unable to decode")
+        return JSONResponse(
+            status_code=422,
+            content={"detail": exc.errors()}
+        )
+    
     # CORS middleware
     # If using wildcard origins, credentials must be disabled per CORS spec
     allow_credentials = True
     if len(settings.allowed_origins) == 1 and settings.allowed_origins[0] == "*":
         allow_credentials = False
+
+    logger.info(f"🔓 CORS Origins: {settings.allowed_origins}")
+    logger.info(f"🔐 CORS Credentials: {allow_credentials}")
 
     app.add_middleware(
         CORSMiddleware,

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 from typing import Optional
 from enum import Enum
 from datetime import datetime
@@ -30,6 +30,13 @@ class AnalyzeRequest(BaseModel):
     pr_url: Optional[str] = None
     diff_text: Optional[str] = None
     options: Optional[AnalyzeOptions] = Field(default_factory=AnalyzeOptions)
+    
+    @model_validator(mode='after')
+    def check_pr_url_or_diff(self):
+        """Ensure at least one of pr_url or diff_text is provided."""
+        if not self.pr_url and not self.diff_text:
+            raise ValueError("Either 'pr_url' or 'diff_text' must be provided")
+        return self
     
     class Config:
         json_schema_extra = {

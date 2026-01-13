@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None
     
     # CORS
-    allowed_origins: str = "https://colorstackwinterhackathon2025-codes.vercel.app"
+    allowed_origins: list[str] = ["https://colorstackwinterhackathon2025-codes.vercel.app"]
     allowed_origin_regex: str | None = None
     
     class Config:
@@ -41,6 +41,11 @@ def get_settings() -> Settings:
     env_csv = os.getenv("ALLOWED_ORIGINS")
     if env_csv:
         settings.allowed_origins = [o.strip() for o in env_csv.split(",") if o.strip()]
+    else:
+        # Ensure we always have at least the default
+        if not settings.allowed_origins:
+            settings.allowed_origins = ["https://colorstackwinterhackathon2025-codes.vercel.app"]
+    
     # Optional regex support for wildcard domains
     env_regex = os.getenv("ALLOWED_ORIGIN_REGEX")
     if env_regex:
